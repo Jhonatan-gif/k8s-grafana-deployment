@@ -1,0 +1,32 @@
+# Parte 1 - ReplicaSet "puro".
+# Garantiza que siempre existan N pods idénticos (auto-reparación y escalado),
+# pero NO sabe hacer actualizaciones progresivas ni rollback: para eso está el Deployment.
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: grafana-rs
+  namespace: monitoreo
+  labels:
+    app: grafana-rs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: grafana-rs
+  template:
+    metadata:
+      labels:
+        app: grafana-rs
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:11.3.0
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
