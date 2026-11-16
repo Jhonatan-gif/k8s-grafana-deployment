@@ -1,0 +1,88 @@
+# Aprovisionamiento de Grafana: datasource + dashboard declarados como código.
+# Así todas las réplicas arrancan con la misma configuración (pods intercambiables).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-provisioning
+  namespace: monitoreo
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: TestData
+        type: grafana-testdata-datasource
+        uid: testdata
+        access: proxy
+        isDefault: true
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: k8s-demo
+        folder: Kubernetes
+        type: file
+        disableDeletion: true
+        options:
+          path: /etc/grafana/dashboards
+  k8s-demo.json: |
+    {
+      "uid": "k8s-demo",
+      "title": "Demo Deployment y ReplicaSet",
+      "timezone": "browser",
+      "refresh": "10s",
+      "time": { "from": "now-1h", "to": "now" },
+      "schemaVersion": 39,
+      "panels": [
+        {
+          "id": 1,
+          "type": "text",
+          "title": "Grafana en Kubernetes",
+          "gridPos": { "x": 0, "y": 0, "w": 24, "h": 4 },
+          "options": {
+            "mode": "markdown",
+            "content": "Desplegado con un **Deployment** de 3 réplicas (gestionadas por un **ReplicaSet**) y expuesto con un **Service NodePort** en el namespace `monitoreo`. Datasource y dashboard aprovisionados desde un **ConfigMap**."
+          }
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "Peticiones por segundo (simulado)",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "gridPos": { "x": 0, "y": 4, "w": 16, "h": 9 },
+          "fieldConfig": { "defaults": { "displayName": "${__field.labels.pod}" } },
+          "targets": [
+            { "refId": "A", "scenarioId": "random_walk", "seriesCount": 3, "labels": "pod=grafana-$seriesIndex" }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "gauge",
+          "title": "Uso de CPU (simulado)",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "gridPos": { "x": 16, "y": 4, "w": 8, "h": 9 },
+          "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } },
+          "targets": [
+            { "refId": "A", "scenarioId": "random_walk", "min": 20, "max": 90 }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "Réplicas del Deployment (valor de ejemplo)",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "gridPos": { "x": 0, "y": 13, "w": 8, "h": 5 },
+          "targets": [
+            { "refId": "A", "scenarioId": "csv_metric_values", "stringInput": "3,3,3" }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "barchart",
+          "title": "Latencia por endpoint (simulado, ms)",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "gridPos": { "x": 8, "y": 13, "w": 16, "h": 5 },
+          "targets": [
+            { "refId": "A", "scenarioId": "csv_content", "csvContent": "endpoint,latencia\n/login,120\n/api/products,85\n/api/health,12\n/api/reports,240" }
+          ]
+        }
+      ]
+    }

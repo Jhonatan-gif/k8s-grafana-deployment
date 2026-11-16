@@ -1,0 +1,7 @@
+# Namespace aislado para la plataforma de monitoreo
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoreo
+  labels:
+    proyecto: k8s-grafana-deployment
