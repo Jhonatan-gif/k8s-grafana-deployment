@@ -1,0 +1,21 @@
+# Exposición de Grafana fuera del clúster.
+# NodePort publica el puerto 30300 en el nodo y balancea entre las réplicas.
+# sessionAffinity mantiene a cada cliente en el mismo pod (cada réplica guarda
+# sus sesiones de login en su propia base SQLite).
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: monitoreo
+  labels:
+    app: grafana
+spec:
+  type: NodePort
+  selector:
+    app: grafana
+  sessionAffinity: ClientIP
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+      nodePort: 30300
