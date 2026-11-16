@@ -1,0 +1,17 @@
+$ kubectl apply -f k8s/00-namespace.yaml -f k8s/01-secret.yaml -f k8s/02-configmap.yaml
+namespace/monitoreo created
+secret/grafana-admin created
+configmap/grafana-provisioning created
+
+$ kubectl get ns monitoreo
+NAME        STATUS   AGE
+monitoreo   Active   0s
+
+$ kubectl get secret,configmap -n monitoreo
+NAME                   TYPE     DATA   AGE
+secret/grafana-admin   Opaque   2      0s
+
+NAME                             DATA   AGE
+configmap/grafana-provisioning   3      0s
+configmap/kube-root-ca.crt       1      0s
+

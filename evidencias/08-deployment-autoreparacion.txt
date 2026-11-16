@@ -1,0 +1,16 @@
+# Auto-reparación a través del Deployment: se borra un pod y su ReplicaSet lo repone
+$ kubectl delete pod grafana-65d96cff87-5ggck -n monitoreo
+pod "grafana-65d96cff87-5ggck" deleted from monitoreo namespace
+
+$ kubectl get pods -n monitoreo -l app=grafana
+NAME                       READY   STATUS              RESTARTS   AGE
+grafana-65d96cff87-cfwtx   0/1     ContainerCreating   0          2s
+grafana-65d96cff87-cls29   1/1     Running             0          87s
+grafana-65d96cff87-d7xrt   1/1     Terminating         0          51s
+grafana-65d96cff87-hdf8b   1/1     Running             0          87s
+
+$ kubectl rollout status deploy/grafana -n monitoreo --timeout=300s
+Waiting for deployment "grafana" rollout to finish: 2 of 3 updated replicas are available...
+Waiting for deployment "grafana" rollout to finish: 2 of 3 updated replicas are available...
+deployment "grafana" successfully rolled out
+

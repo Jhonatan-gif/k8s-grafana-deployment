@@ -1,0 +1,45 @@
+# Rollback a la revisión anterior (grafana 11.3.0)
+$ kubectl rollout undo deploy/grafana -n monitoreo
+deployment.apps/grafana rolled back
+
+$ kubectl rollout status deploy/grafana -n monitoreo --timeout=300s
+Waiting for deployment "grafana" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "grafana" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "grafana" rollout to finish: 1 old replicas are pending termination...
+deployment "grafana" successfully rolled out
+
+$ kubectl get rs -n monitoreo -o wide
+NAME                 DESIRED   CURRENT   READY   AGE     CONTAINERS   IMAGES                   SELECTOR
+grafana-58c4584fd    0         0         0       3m18s   grafana      grafana/grafana:11.3.1   app=grafana,pod-template-hash=58c4584fd
+grafana-65d96cff87   3         3         3       5m17s   grafana      grafana/grafana:11.3.0   app=grafana,pod-template-hash=65d96cff87
+
+$ kubectl rollout history deploy/grafana -n monitoreo
+deployment.apps/grafana 
+REVISION  CHANGE-CAUSE
+2         Actualizacion a grafana 11.3.1
+3         Despliegue inicial grafana 11.3.0
+
+
+$ kubectl get deploy,rs,pods,svc -n monitoreo -o wide
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                   SELECTOR
+deployment.apps/grafana   3/3     3            3           5m18s   grafana      grafana/grafana:11.3.0   app=grafana
+
+NAME                                 DESIRED   CURRENT   READY   AGE     CONTAINERS   IMAGES                   SELECTOR
+replicaset.apps/grafana-58c4584fd    0         0         0       3m19s   grafana      grafana/grafana:11.3.1   app=grafana,pod-template-hash=58c4584fd
+replicaset.apps/grafana-65d96cff87   3         3         3       5m18s   grafana      grafana/grafana:11.3.0   app=grafana,pod-template-hash=65d96cff87
+
+NAME                           READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+pod/grafana-65d96cff87-7j24g   1/1     Running   0          66s   10.244.0.31   minikube   <none>           <none>
+pod/grafana-65d96cff87-8s8rj   1/1     Running   0          98s   10.244.0.30   minikube   <none>           <none>
+pod/grafana-65d96cff87-glmng   1/1     Running   0          34s   10.244.0.32   minikube   <none>           <none>
+
+NAME              TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE   SELECTOR
+service/grafana   NodePort   10.100.105.85   <none>        3000:30300/TCP   11m   app=grafana
+

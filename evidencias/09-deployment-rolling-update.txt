@@ -1,0 +1,54 @@
+# Rolling update: grafana 11.3.0 -> 11.3.1 (maxSurge=1, maxUnavailable=0)
+$ kubectl set image deploy/grafana grafana=grafana/grafana:11.3.1 -n monitoreo
+deployment.apps/grafana image updated
+
+$ kubectl annotate deploy/grafana -n monitoreo kubernetes.io/change-cause=Actualizacion a grafana 11.3.1 --overwrite
+deployment.apps/grafana annotated
+
+$ kubectl rollout status deploy/grafana -n monitoreo --timeout=300s
+Waiting for deployment "grafana" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "grafana" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "grafana" rollout to finish: 1 old replicas are pending termination...
+deployment "grafana" successfully rolled out
+
+# Se crea un ReplicaSet NUEVO con 3 pods y el anterior queda en 0 (se conserva para rollback)
+$ kubectl get rs -n monitoreo -o wide
+NAME                 DESIRED   CURRENT   READY   AGE     CONTAINERS   IMAGES                   SELECTOR
+grafana-58c4584fd    3         3         3       100s    grafana      grafana/grafana:11.3.1   app=grafana,pod-template-hash=58c4584fd
+grafana-65d96cff87   0         0         0       3m39s   grafana      grafana/grafana:11.3.0   app=grafana,pod-template-hash=65d96cff87
+
+$ kubectl get pods -n monitoreo -l app=grafana -o custom-columns=POD:.metadata.name,IMAGEN:.spec.containers[0].image,ESTADO:.status.phase
+POD                        IMAGEN                   ESTADO
+grafana-58c4584fd-79mzr    grafana/grafana:11.3.1   Running
+grafana-58c4584fd-ctw2c    grafana/grafana:11.3.1   Running
+grafana-58c4584fd-m2zlr    grafana/grafana:11.3.1   Running
+grafana-65d96cff87-cls29   grafana/grafana:11.3.0   Running
+
+$ kubectl describe deploy grafana -n monitoreo | sed -n '/^Events:/,$p'
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  3m40s  deployment-controller  Scaled up replica set grafana-65d96cff87 from 0 to 3
+  Normal  ScalingReplicaSet  3m4s   deployment-controller  Scaled up replica set grafana-65d96cff87 from 3 to 5
+  Normal  ScalingReplicaSet  2m22s  deployment-controller  Scaled down replica set grafana-65d96cff87 from 5 to 3
+  Normal  ScalingReplicaSet  101s   deployment-controller  Scaled up replica set grafana-58c4584fd from 0 to 1
+  Normal  ScalingReplicaSet  69s    deployment-controller  Scaled down replica set grafana-65d96cff87 from 3 to 2
+  Normal  ScalingReplicaSet  69s    deployment-controller  Scaled up replica set grafana-58c4584fd from 1 to 2
+  Normal  ScalingReplicaSet  35s    deployment-controller  Scaled down replica set grafana-65d96cff87 from 2 to 1
+  Normal  ScalingReplicaSet  35s    deployment-controller  Scaled up replica set grafana-58c4584fd from 2 to 3
+  Normal  ScalingReplicaSet  2s     deployment-controller  Scaled down replica set grafana-65d96cff87 from 1 to 0
+
+$ kubectl rollout history deploy/grafana -n monitoreo
+deployment.apps/grafana 
+REVISION  CHANGE-CAUSE
+1         Despliegue inicial grafana 11.3.0
+2         Actualizacion a grafana 11.3.1
+
+

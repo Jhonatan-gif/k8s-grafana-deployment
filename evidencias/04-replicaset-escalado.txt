@@ -1,0 +1,16 @@
+# Escalado del ReplicaSet de 3 a 5 réplicas
+$ kubectl scale rs grafana-rs -n monitoreo --replicas=5
+replicaset.apps/grafana-rs scaled
+
+$ kubectl get rs grafana-rs -n monitoreo
+NAME         DESIRED   CURRENT   READY   AGE
+grafana-rs   5         5         3       43s
+
+$ kubectl get pods -n monitoreo -l app=grafana-rs
+NAME               READY   STATUS              RESTARTS   AGE
+grafana-rs-96t8v   1/1     Running             0          4s
+grafana-rs-j446f   1/1     Running             0          44s
+grafana-rs-sgfrt   0/1     ContainerCreating   0          1s
+grafana-rs-w2cqj   1/1     Running             0          44s
+grafana-rs-w44c4   0/1     ContainerCreating   0          1s
+

@@ -1,0 +1,20 @@
+# Limitación: se cambia la imagen del ReplicaSet, pero los pods existentes NO se actualizan
+$ kubectl set image rs/grafana-rs grafana=grafana/grafana:11.3.1 -n monitoreo
+replicaset.apps/grafana-rs image updated
+
+$ kubectl get rs grafana-rs -n monitoreo -o wide
+NAME         DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES                   SELECTOR
+grafana-rs   5         5         5       53s   grafana      grafana/grafana:11.3.1   app=grafana-rs
+
+$ kubectl get pods -n monitoreo -l app=grafana-rs -o custom-columns=POD:.metadata.name,IMAGEN:.spec.containers[0].image
+POD                IMAGEN
+grafana-rs-96t8v   grafana/grafana:11.3.0
+grafana-rs-j446f   grafana/grafana:11.3.0
+grafana-rs-sgfrt   grafana/grafana:11.3.0
+grafana-rs-w2cqj   grafana/grafana:11.3.0
+grafana-rs-w44c4   grafana/grafana:11.3.0
+
+# Conclusión: para actualizar sin intervención manual se necesita un Deployment
+$ kubectl delete rs grafana-rs -n monitoreo
+replicaset.apps "grafana-rs" deleted from monitoreo namespace
+

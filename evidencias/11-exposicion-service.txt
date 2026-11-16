@@ -1,0 +1,45 @@
+# Exposición: Service NodePort (puerto 30300 del nodo) + túnel de minikube (driver docker en Windows)
+$ kubectl get svc grafana -n monitoreo -o wide
+NAME      TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE   SELECTOR
+grafana   NodePort   10.100.105.85   <none>        3000:30300/TCP   11m   app=grafana
+
+$ kubectl get endpointslices -n monitoreo -l kubernetes.io/service-name=grafana
+NAME            ADDRESSTYPE   PORTS   ENDPOINTS                             AGE
+grafana-rhkzk   IPv4          3000    10.244.0.30,10.244.0.31,10.244.0.32   11m
+
+$ kubectl describe svc grafana -n monitoreo
+Name:                     grafana
+Namespace:                monitoreo
+Labels:                   app=grafana
+Annotations:              <none>
+Selector:                 app=grafana
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.100.105.85
+IPs:                      10.100.105.85
+Port:                     http  3000/TCP
+TargetPort:               http/TCP
+NodePort:                 http  30300/TCP
+Endpoints:                10.244.0.30:3000,10.244.0.31:3000,10.244.0.32:3000
+Session Affinity:         ClientIP
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+$ minikube service grafana -n monitoreo --url
+http://127.0.0.1:51104
+! Because you are using a Docker driver on windows, the terminal needs to be open to run it.
+
+$ curl -s http://127.0.0.1:51104/api/health
+{
+  "database": "ok",
+  "version": "11.3.0",
+  "commit": "d9455ff7db73b694db7d412e49a68bec767f2b5a"
+}
+
+$ curl -s -u admin:**** http://127.0.0.1:51104/api/datasources
+[{"id":1,"uid":"testdata","orgId":1,"name":"TestData","type":"grafana-testdata-datasource","typeName":"TestData","typeLogoUrl":"public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg","access":"proxy","url":"","user":"","database":"","basicAuth":false,"isDefault":true,"jsonData":{},"readOnly":true}]
+
+$ curl -s -u admin:**** "http://127.0.0.1:51104/api/search?query=Demo"
+[{"id":2,"uid":"k8s-demo","title":"Demo Deployment y ReplicaSet","uri":"db/demo-deployment-y-replicaset","url":"/d/k8s-demo/demo-deployment-y-replicaset","slug":"","type":"dash-db","tags":[],"isStarred":false,"folderId":1,"folderUid":"fg4hw6yog35s0f","folderTitle":"Kubernetes","folderUrl":"/dashboards/f/fg4hw6yog35s0f/Kubernetes","sortMeta":0,"isDeleted":false}]

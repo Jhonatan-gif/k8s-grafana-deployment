@@ -1,0 +1,37 @@
+# Escalado horizontal del Deployment: 3 -> 5 -> 3
+$ kubectl scale deploy/grafana -n monitoreo --replicas=5
+deployment.apps/grafana scaled
+
+$ kubectl rollout status deploy/grafana -n monitoreo --timeout=300s
+Waiting for deployment "grafana" rollout to finish: 3 out of 5 new replicas have been updated...
+Waiting for deployment "grafana" rollout to finish: 3 of 5 updated replicas are available...
+Waiting for deployment "grafana" rollout to finish: 4 of 5 updated replicas are available...
+deployment "grafana" successfully rolled out
+
+$ kubectl get deploy,rs,pods -n monitoreo
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/grafana   5/5     5            5           78s
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/grafana-65d96cff87   5         5         5       78s
+
+NAME                           READY   STATUS    RESTARTS   AGE
+pod/grafana-65d96cff87-5ggck   1/1     Running   0          78s
+pod/grafana-65d96cff87-cls29   1/1     Running   0          78s
+pod/grafana-65d96cff87-d7xrt   1/1     Running   0          42s
+pod/grafana-65d96cff87-hdf8b   1/1     Running   0          78s
+pod/grafana-65d96cff87-jnnql   1/1     Running   0          42s
+
+$ kubectl scale deploy/grafana -n monitoreo --replicas=3
+deployment.apps/grafana scaled
+
+$ kubectl rollout status deploy/grafana -n monitoreo --timeout=300s
+deployment "grafana" successfully rolled out
+
+$ kubectl get deploy,rs -n monitoreo
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/grafana   3/3     3            3           85s
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/grafana-65d96cff87   3         3         3       85s
+

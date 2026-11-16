@@ -1,0 +1,19 @@
+# Auto-reparación: se elimina un pod a mano y el ReplicaSet crea otro para volver a 3
+$ kubectl delete pod grafana-rs-6h59x -n monitoreo
+pod "grafana-rs-6h59x" deleted from monitoreo namespace
+
+$ kubectl get pods -n monitoreo -l app=grafana-rs
+NAME               READY   STATUS    RESTARTS   AGE
+grafana-rs-96t8v   1/1     Running   0          2s
+grafana-rs-j446f   1/1     Running   0          42s
+grafana-rs-w2cqj   1/1     Running   0          42s
+
+$ kubectl describe rs grafana-rs -n monitoreo | sed -n '/^Events:/,$p'
+Events:
+  Type    Reason            Age   From                   Message
+  ----    ------            ----  ----                   -------
+  Normal  SuccessfulCreate  43s   replicaset-controller  Created pod: grafana-rs-w2cqj
+  Normal  SuccessfulCreate  43s   replicaset-controller  Created pod: grafana-rs-6h59x
+  Normal  SuccessfulCreate  43s   replicaset-controller  Created pod: grafana-rs-j446f
+  Normal  SuccessfulCreate  3s    replicaset-controller  Created pod: grafana-rs-96t8v
+

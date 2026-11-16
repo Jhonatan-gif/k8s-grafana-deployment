@@ -1,0 +1,13 @@
+$ kubectl apply -f k8s/03-replicaset.yaml
+replicaset.apps/grafana-rs unchanged
+
+$ kubectl get rs grafana-rs -n monitoreo -o wide
+NAME         DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES                   SELECTOR
+grafana-rs   3         3         3       38s   grafana      grafana/grafana:11.3.0   app=grafana-rs
+
+$ kubectl get pods -n monitoreo -l app=grafana-rs -o wide
+NAME               READY   STATUS    RESTARTS   AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+grafana-rs-6h59x   1/1     Running   0          39s   10.244.0.6   minikube   <none>           <none>
+grafana-rs-j446f   1/1     Running   0          39s   10.244.0.5   minikube   <none>           <none>
+grafana-rs-w2cqj   1/1     Running   0          39s   10.244.0.4   minikube   <none>           <none>
+

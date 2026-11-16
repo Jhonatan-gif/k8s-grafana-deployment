@@ -1,0 +1,39 @@
+$ kubectl apply -f k8s/04-deployment.yaml -f k8s/05-service.yaml
+deployment.apps/grafana created
+service/grafana unchanged
+
+$ kubectl annotate deploy/grafana -n monitoreo kubernetes.io/change-cause=Despliegue inicial grafana 11.3.0 --overwrite
+deployment.apps/grafana annotated
+
+$ kubectl rollout status deploy/grafana -n monitoreo --timeout=300s
+Waiting for deployment "grafana" rollout to finish: 0 of 3 updated replicas are available...
+Waiting for deployment "grafana" rollout to finish: 1 of 3 updated replicas are available...
+Waiting for deployment "grafana" rollout to finish: 2 of 3 updated replicas are available...
+deployment "grafana" successfully rolled out
+
+$ kubectl get deploy,rs,pods,svc -n monitoreo -o wide
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                   SELECTOR
+deployment.apps/grafana   3/3     3            3           35s   grafana      grafana/grafana:11.3.0   app=grafana
+
+NAME                                 DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES                   SELECTOR
+replicaset.apps/grafana-65d96cff87   3         3         3       35s   grafana      grafana/grafana:11.3.0   app=grafana,pod-template-hash=65d96cff87
+
+NAME                           READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+pod/grafana-65d96cff87-5ggck   1/1     Running   0          35s   10.244.0.22   minikube   <none>           <none>
+pod/grafana-65d96cff87-cls29   1/1     Running   0          35s   10.244.0.23   minikube   <none>           <none>
+pod/grafana-65d96cff87-hdf8b   1/1     Running   0          35s   10.244.0.21   minikube   <none>           <none>
+
+NAME              TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE     SELECTOR
+service/grafana   NodePort   10.100.105.85   <none>        3000:30300/TCP   6m55s   app=grafana
+
+# El Deployment es dueño del ReplicaSet, y el ReplicaSet es dueño de los pods
+$ kubectl get rs -n monitoreo -l app=grafana -o custom-columns=REPLICASET:.metadata.name,OWNER_KIND:.metadata.ownerReferences[0].kind,OWNER:.metadata.ownerReferences[0].name
+REPLICASET           OWNER_KIND   OWNER
+grafana-65d96cff87   Deployment   grafana
+
+$ kubectl get pods -n monitoreo -l app=grafana -o custom-columns=POD:.metadata.name,OWNER_KIND:.metadata.ownerReferences[0].kind,OWNER:.metadata.ownerReferences[0].name
+POD                        OWNER_KIND   OWNER
+grafana-65d96cff87-5ggck   ReplicaSet   grafana-65d96cff87
+grafana-65d96cff87-cls29   ReplicaSet   grafana-65d96cff87
+grafana-65d96cff87-hdf8b   ReplicaSet   grafana-65d96cff87
+
